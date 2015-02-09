@@ -5,12 +5,17 @@ import sys
 import os
 import tempfile
 import argparse
-import urllib
-import httplib
+import urllib.request, urllib.parse, urllib.error
+import http.client
 import bs4
 import json
+import platform
 from mutagen import id3, mp3
 
+if platform.system() == 'Windows':
+    sep = '\\'
+else:
+    sep = '/'
 
 def createParser():
     '''Create parser for command-line arguments'''
@@ -32,15 +37,15 @@ def getmp3():
     if namespace.file:
         files = [' '.join(namespace.file)]
         for filename in files:
-            print filename
+            print(filename)
             if not isArtworked(filename):
-                tempArtFile = getartwork(parseImgURL(crLFMQuery(crLFMRequest(getTags(filename))), 'large'))
+                tempArtFile = getartwork(parseImgURL(crLFMQuery(crLFMRequest(*getTags(filename))), 'large'))
                 if tempArtFile:
                     setartwork(filename, tempArtFile)
                 else:
-                    print 'file', filename, 'not artworked'
+                    print('file', filename, 'not artworked')
             else:
-                print 'file', filename, 'already artworked'
+                print('file', filename, 'already artworked')
     # --dir processing
     if namespace.dir:
         dirs = [' '.join(namespace.dir)]
@@ -49,21 +54,21 @@ def getmp3():
                 localCover = isLocalcovers(dirs[0])
                 for file in os.listdir(dirs[0]):
                     if file.endswith('.mp3'):
-                        if not isArtworked(dirs[0] + '\\' + file):
-                            setartwork(dirs[0] + '\\' + file, localCover)
+                        if not isArtworked(dirs[0] + sep + file):
+                            setartwork(dirs[0] + sep + file, localCover)
                         else:
-                            print 'file', dirs[0] + '\\' + file, 'already artworked'
+                            print('file', dirs[0] + sep + file, 'already artworked')
             else:                           # if local directory don't have file that seems to artwork
                 for file in os.listdir(dirs[0]):
                     if file.endswith('.mp3'):
-                        if not isArtworked(dirs[0] + '\\' + file):
-                            tempArtFile = getartwork(parseImgURL(crLFMQuery(crLFMRequest(getTags(dirs[0] + '\\' + file))), 'large'))
+                        if not isArtworked(dirs[0] + sep + file):
+                            tempArtFile = getartwork(parseImgURL(crLFMQuery(crLFMRequest(*getTags(dirs[0] + sep + file))), 'large'))
                             if tempArtFile:
-                                setartwork(dirs[0] + '\\' + file, tempArtFile)
+                                setartwork(dirs[0] + sep + file, tempArtFile)
                         else:
-                            print 'file', dirs[0] + '\\' + file, 'already artworked'
+                            print('file', dirs[0] + sep + file, 'already artworked')
         else:
-            print 'Recursive flag enabled'
+            print('Recursive flag enabled')
             for root, dirs, files in os.walk(dirs[0]):
                 for file in files:
                     if file.endswith('.mp3'):
@@ -71,11 +76,11 @@ def getmp3():
                             if isLocalcovers(root):                     # TODO: need deeply rework, this code isn't optimal
                                 setartwork(os.path.join(root, file), isLocalcovers(root))
                             else:
-                                tempArtFile = getartwork(parseImgURL(crLFMQuery(crLFMRequest(getTags(os.path.join(root, file)))), 'large'))
+                                tempArtFile = getartwork(parseImgURL(crLFMQuery(crLFMRequest(*getTags(os.path.join(root, file)))), 'large'))
                                 if tempArtFile:
                                     setartwork(os.path.join(root, file), tempArtFile)
                         else:
-                            print 'file', os.path.join(root, file), 'already artworked'
+                            print('file', os.path.join(root, file), 'already artworked')
 
 
 def isLocalcovers(dir):
@@ -86,7 +91,7 @@ def isLocalcovers(dir):
 
     # dir not empty?
     if not os.listdir(dir):
-        print 'dir', dir, 'is empty, we will not search any covers in it'
+        print('dir', dir, 'is empty, we will not search any covers in it')
         return False
 
     # collect all files that match to extensions
@@ -97,7 +102,7 @@ def isLocalcovers(dir):
 
     # anything matches?
     if not matches:
-        print 'dir', dir, 'don\'t have any local covers to artwork'
+        print('dir', dir, 'don\'t have any local covers to artwork')
         return False
     # search well-known names, if find - first matched will be return, if not - first of all will be return
     for file in matches:
@@ -108,7 +113,7 @@ def isLocalcovers(dir):
         elif file[-9:-4].lower() == 'front':
             return file
         else:
-            print 'dir', dir, 'have some filesm but don\'t have suitable files to artwork, cause filenames not too good for that'
+            print('dir', dir, 'have some filesm but don\'t have suitable files to artwork, cause filenames not too good for that')
             return False
 
 
@@ -130,35 +135,35 @@ def getTags(au_file):
     # parse album tag
     try:
         sAlbum = "".join(audiofile.tags['TALB'].text)
-        print 'Album is:', sAlbum
-    except KeyError:
-        print 'Album name in', au_file, 'not found, skipping'
+        print('Album is:', sAlbum)
+    except (KeyError, TypeError):
+        print('Album name in', au_file, 'not found, skipping')
         sAlbum = False
 
     # parse artist tag
     try:
         sArtist = "".join(audiofile.tags['TPE1'].text)
-        print 'Artist is:', sArtist
-    except KeyError:
-        print 'Artist name in', au_file, 'not found, skipping'
+        print('Artist is:', sArtist)
+    except (KeyError, TypeError):
+        print('Artist name in', au_file, 'not found, skipping')
         sArtist = False
 
-    return sArtist, sAlbum
+    return sArtist,sAlbum
 
 
-def crLFMRequest((lArtist, lAlbum)):
+def crLFMRequest(lArtist, lAlbum):
     '''Build request to send it to lastFM later'''
     data = json.load(open('partwork.conf','r')) # load conffile
     sApiKey  = data['lastFM']['apikey']
     if lArtist and ((lAlbum != 'Single') and (lAlbum != 'single') and lAlbum):
-        sArtist = urllib.quote_plus(lArtist.encode('utf-8')) # this done to cyrillic works
-        sAlbum  = urllib.quote_plus(lAlbum.encode('utf-8')) # this done to cyrillic works
+        sArtist = urllib.parse.quote_plus(lArtist.encode('utf-8')) # this done to cyrillic works
+        sAlbum  = urllib.parse.quote_plus(lAlbum.encode('utf-8')) # this done to cyrillic works
         params  = {'method' : 'album.getinfo', 'api_key' : sApiKey, 'artist' : sArtist, 'album' : sAlbum}
-        return urllib.unquote(urllib.urlencode(params))
+        return urllib.parse.unquote(urllib.parse.urlencode(params))
     elif lArtist:
-        sArtist = urllib.quote_plus(lArtist.encode('utf-8')) # this done to cyrillic works
+        sArtist = urllib.parse.quote_plus(lArtist.encode('utf-8')) # this done to cyrillic works
         params  = {'method' : 'artist.getinfo', 'artist' : sArtist, 'api_key' : sApiKey}
-        return urllib.unquote(urllib.urlencode(params))
+        return urllib.parse.unquote(urllib.parse.urlencode(params))
     else:
         return False
 
@@ -168,7 +173,7 @@ def crLFMQuery(LFMRequest):
         many requests.'''
     if LFMRequest:
         LFMUrl = 'ws.audioscrobbler.com'
-        cConn = httplib.HTTPConnection(LFMUrl)
+        cConn = http.client.HTTPConnection(LFMUrl)
         cConn.request('GET', '/2.0/?' + LFMRequest)
         cResult = cConn.getresponse()
         cConn.close()
@@ -182,10 +187,10 @@ def parseImgURL(query, iSize):
     if query:
         bsSoup = bs4.BeautifulSoup(query, features='xml')
         if bsSoup and not bsSoup.find('error', code=6):
-            print 'image URL is: ', bsSoup.find('image', size='large').text
+            print('image URL is: ', bsSoup.find('image', size='large').text)
             return bsSoup.find('image', size=iSize).text
         else:
-            print 'We cannot find suitable artwork URL for that song, sorry'
+            print('We cannot find suitable artwork URL for that song, sorry')
             return False
     else:
         return False
@@ -197,7 +202,7 @@ def getartwork(urlSource):
        file, write content of URL to that file and return full-path
        to that file'''
     if urlSource:
-        fSource = urllib.urlopen(urlSource)
+        fSource = urllib.request.urlopen(urlSource)
         fTarget = tempfile.NamedTemporaryFile(delete=False)
         sData = fSource.read()
         fTarget.write(sData)
@@ -205,7 +210,7 @@ def getartwork(urlSource):
         fSource.close()
         return fTarget.name
     else:
-        print "Image for this album not found"
+        print("Image for this album not found")
         return False
 
 
@@ -219,12 +224,12 @@ def setartwork(au_file, cover_file):
                 encoding=3,
                 mime='image/jpg',
                 type=3,
-                desc=u'Cover',
+                desc='Cover',
                 data=open(cover_file, 'rb').read()
                 ))
         audiofile.save()
     else:
-        print 'file already have artwork, no need to add another one'
+        print('file already have artwork, no need to add another one')
 
 if __name__ == "__main__":
     getmp3()
