@@ -1,43 +1,30 @@
-import sys
 import os
-import argparse
 import platform
+import logging
 
 if platform.system() == 'Windows':
     sep = '\\'
 else:
     sep = '/'
 
-def createParser():
-  '''Create parser for command-line arguments'''
-  parser = argparse.ArgumentParser()
-  parser.add_argument('-f', '--file', nargs = '+')
-  parser.add_argument('-d', '--dir', nargs = '+')
-  parser.add_argument('-r', '--recursive', action = 'store_true')
-  return parser
-
-def getfiles():
-  parser = createParser()
-  namespace = parser.parse_args(sys.argv[1:])
-
-  # namespaces parsing processed splitly.
+def getfiles(file="",directory="",recursive=False):
   # --file processing
-  if namespace.file:
-    files = [' '.join(namespace.file)]
+  if file:
+    files = [' '.join(file)]
     for filename in files:
       # return generator
       yield filename
 
   # --dir processing
-  if namespace.dir:
-    dirs = [' '.join(namespace.dir)]
-    if not namespace.recursive:
+  if directory:
+    dirs = [' '.join(directory)]
+    if not recursive:
       # return generator
       for file in os.listdir(dirs[0]):
         if file.endswith('.mp3'):
           yield dirs[0]+sep+file
     else:
-      print('Recursive flag enabled')
+      logging.debug('Recursive flag enabled')
       for root, dirs, files in os.walk(dirs[0]):
         # return generator
         for file in files:
@@ -45,5 +32,5 @@ def getfiles():
             yield root+sep+file
 
 if __name__ == '__main__':
-  for f in getfiles():
+  for f in getfiles(directory='.',recursive=True):
       print(f)
