@@ -3,6 +3,7 @@ import urllib.parse, urllib.error
 import http.client
 import bs4
 
+
 def crLFMRequest(lArtist="", lAlbum=""):
   '''Build request to send it to lastFM later
 

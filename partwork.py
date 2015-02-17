@@ -29,6 +29,8 @@ if __name__ == "__main__":
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     logging.debug("Debug enabled")
 
+  cached = { 'artist':'', 'album':'', 'path':'' }
+
   for file in getfiles(file=args.file,directory=args.dir,recursive=args.recursive):
     # if file already artworked - skip
     if lchk.isFileArtworked(file):
@@ -43,19 +45,37 @@ if __name__ == "__main__":
       continue
 
     # process with outside sources
-    # lastFM check
     tags = gettags(file)
+    # check that we have something at all
+    if tags[0] == False and tags[1] == False:
+      logging.warn('We don\'t have anything about that file, so it\'s nothing to find\n')
+      continue
+
+    # then check cache first
+    if cached['artist'] == tags[0] and cached['album'] == tags[1]:
+      if cached['path']:
+        logging.info('Local cache found, using it')
+        setartwork(file, cached['path'])
+        continue
+      else:
+        logging.warn('Artist and album found in local cache, but artwork not found. It doesn\'t have sense to try find it again\n')
+        continue
+    else:
+      cached['artist'],cached['album'] = tags
+      cached['path'] = ''
+
+    # lastFM check
     url = lfm.process(*tags)
     tempArtFile = getartwork(url)
     if tempArtFile:
-      setartwork(file, localCover)
+      cached['path'] = tempArtFile
+      setartwork(file, tempArtFile)
       continue
 
   # TODO: optionally, we can save downloaded artwork in local directory (but we need to smart save - e.g.
   # do not save cover in directory with many files from different albums)
-  # TODO: we can do 'smart' find - e.g. if files from one album locate in one directory, then we don't need to find
-  # picture for them many times - only first time is enough
   # TODO: add new search engines
+  # TODO: we can try to get tags harder - e.g., from local name, from some sources like shazam etc.
   # TODO: print list of not artworked files after doing all work
   # TODO: verbose info
     # TODO: save unartworked files in file and add option to load that list in next time

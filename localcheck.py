@@ -2,6 +2,7 @@ import os
 import logging
 from mutagen import id3,mp3
 
+
 def isFileArtworked(au_file):
   '''Check, wouldn't file already been artworked earlier'''
   audiofile = mp3.MP3(au_file, ID3=id3.ID3)
@@ -36,10 +37,13 @@ def isLocalCovers(dir):
   # search well-known names, if find - first matched will be return, if not - first of all will be return
   for file in matches:
     if file[-10:-4].lower() == 'folder':
+      logging.info("Local cover file found, %s" % file)
       return file
     elif file[-9:-4].lower() == 'cover':
+      logging.info("Local cover file found, %s" % file)
       return file
     elif file[-9:-4].lower() == 'front':
+      logging.info("Local cover file found, %s" % file)
       return file
     else:
       logging.info('Dir %s have some files but doesn\'t have suitable files to artwork, cause filenames not too good for that' % dir)

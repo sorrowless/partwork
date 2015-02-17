@@ -1,6 +1,7 @@
 from mutagen import id3,mp3
 import urllib.request
 import logging
+import tempfile
 
 def gettags(au_file):
   '''get mp3 file path a argument, parse tags and return id3 Album name and Artist name (or error
@@ -58,6 +59,7 @@ def setartwork(au_file, cover_file):
         data=open(cover_file, 'rb').read()
         ))
     audiofile.save()
+    print('Successfully artworked!!\n')
   else:
       print('file already have artwork, no need to add another one')
 
