@@ -1,5 +1,6 @@
 from mutagen import id3,mp3
 import urllib.request
+import logging
 
 def gettags(au_file):
   '''get mp3 file path a argument, parse tags and return id3 Album name and Artist name (or error
@@ -11,7 +12,7 @@ def gettags(au_file):
     sAlbum = "".join(audiofile.tags['TALB'].text)
     print('Album is:', sAlbum)
   except (KeyError, TypeError):
-    print('Album name in', au_file, 'not found, skipping')
+    logging.warn('Album name in %s not found' % au_file)
     sAlbum = False
 
   # parse artist tag
@@ -19,7 +20,7 @@ def gettags(au_file):
     sArtist = "".join(audiofile.tags['TPE1'].text)
     print('Artist is:', sArtist)
   except (KeyError, TypeError):
-    print('Artist name in', au_file, 'not found, skipping')
+    logging.warn('Artist name in %s not found' % au_file)
     sArtist = False
 
   return sArtist,sAlbum
@@ -39,7 +40,7 @@ def getartwork(urlSource):
     fSource.close()
     return fTarget.name
   else:
-    print("Image for this album not found")
+    logging.warn("Image for this file not found\n")
     return False
 
 

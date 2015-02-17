@@ -1,4 +1,5 @@
 import os
+import logging
 from mutagen import id3,mp3
 
 def isFileArtworked(au_file):
@@ -19,7 +20,7 @@ def isLocalCovers(dir):
 
   # dir not empty?
   if not os.listdir(dir):
-    print('dir', dir, 'is empty, we will not search any covers in it')
+    logging.info('Dir %s is empty, we will not search any covers in it' % dir)
     return False
 
   # collect all files that match to extensions
@@ -30,7 +31,7 @@ def isLocalCovers(dir):
 
   # anything matches?
   if not matches:
-    print('dir', dir, 'doesn\'t have any local covers to artwork')
+    logging.info('Dir %s doesn\'t have any local covers to artwork' % dir)
     return False
   # search well-known names, if find - first matched will be return, if not - first of all will be return
   for file in matches:
@@ -41,5 +42,5 @@ def isLocalCovers(dir):
     elif file[-9:-4].lower() == 'front':
       return file
     else:
-      print('dir', dir, 'have some files but doesn\'t have suitable files to artwork, cause filenames not too good for that')
+      logging.info('Dir %s have some files but doesn\'t have suitable files to artwork, cause filenames not too good for that' % dir)
       return False

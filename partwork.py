@@ -32,9 +32,10 @@ if __name__ == "__main__":
   for file in getfiles(file=args.file,directory=args.dir,recursive=args.recursive):
     # if file already artworked - skip
     if lchk.isFileArtworked(file):
-      print('file %s already artworked' % file)
+      logging.info('File %s already artworked\n' % file)
       continue
 
+    print("File is: %s" % file)
     # if local cover in filedir exists - set and go to next file
     localCover = lchk.isLocalCovers(os.path.dirname(os.path.abspath(file)))
     if localCover:
