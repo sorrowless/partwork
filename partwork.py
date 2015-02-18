@@ -72,10 +72,7 @@ if __name__ == "__main__":
       setartwork(file, tempArtFile)
       continue
 
-  # TODO: optionally, we can save downloaded artwork in local directory (but we need to smart save - e.g.
-  # do not save cover in directory with many files from different albums)
   # TODO: add new search engines
   # TODO: we can try to get tags harder - e.g., from local name, from some sources like shazam etc.
   # TODO: print list of not artworked files after doing all work
-  # TODO: verbose info
     # TODO: save unartworked files in file and add option to load that list in next time
