@@ -18,3 +18,5 @@ to artwork files in that directory recursively.
 Partwork will trying to search artwork for your files in local directory
 or in case of fail in LastFM (for what we need to use lastfm key which you
 can get absolutely free).
+
+Also you can use -v switch to verbosity (can be applied more than once).
